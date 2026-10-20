@@ -1,0 +1,12 @@
+data/
+outputs/
+mlruns/
+mlartifacts/
+mlflow.db
+spark-warehouse/
+metastore_db/
+derby.log
+.venv/
+__pycache__/
+.ipynb_checkpoints/
+*.pkl

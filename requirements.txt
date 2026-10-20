@@ -1,0 +1,8 @@
+pyspark==4.2.0
+mlflow
+pandas<3
+numpy
+matplotlib
+seaborn
+scikit-learn
+ipykernel
