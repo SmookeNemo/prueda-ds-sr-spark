@@ -1,0 +1,23 @@
+{
+  "arboles": [
+    "url_length",
+    "n_slash",
+    "n_dots",
+    "n_hypens",
+    "n_redirection",
+    "n_underline",
+    "n_equal"
+  ],
+  "logit": [
+    "n_slash",
+    "url_length",
+    "n_dots",
+    "n_at",
+    "n_hypens",
+    "n_and",
+    "n_underline",
+    "n_questionmark",
+    "n_redirection",
+    "n_percent"
+  ]
+}
