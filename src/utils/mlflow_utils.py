@@ -184,3 +184,53 @@ def predecir_con_campeon(sdf: DataFrame, nombre_modelo: str, alias: str = ALIAS)
                        F.col(COL_PROB).alias("probabilidad"),
                        (F.col(COL_PROB) >= umbral).cast("int").alias("prediccion"),
                        F.lit(umbral).alias("umbral_usado"))
+
+
+# ----------------------------------------------------------------- Segmentación (no supervisado)
+def loguear_run_cluster(nombre_run: str, etapa: str, params: dict = None, metricas: dict = None,
+                        figuras: dict = None, tablas: dict = None, modelo=None, sdf_ejemplo: DataFrame = None,
+                        registered_model_name: str = None):
+    """Run genérico para clustering: params, métricas, gráficos, tablas (CSV) y, opcionalmente, el modelo.
+    Devuelve (run_id, info_del_modelo o None)."""
+    info = None
+    with mlflow.start_run(run_name=nombre_run) as run:
+        mlflow.set_tag("etapa", etapa)
+        if params:
+            mlflow.log_params(params)
+        if metricas:
+            mlflow.log_metrics({k: float(v) for k, v in metricas.items()})
+        for nombre, fig in (figuras or {}).items():
+            mlflow.log_figure(fig, f"graficos/{nombre}.png")
+            plt.close(fig)
+        with tempfile.TemporaryDirectory() as tmp:
+            for nombre, tabla in (tablas or {}).items():
+                ruta = os.path.join(tmp, f"{nombre}.csv")
+                tabla.to_csv(ruta)
+                mlflow.log_artifact(ruta, artifact_path="tablas")
+        if modelo is not None:
+            info = _log_model(modelo, sdf_ejemplo, registered_model_name=registered_model_name)
+        return run.info.run_id, info
+
+
+def registrar_segmentador(modelo, sdf_ejemplo: DataFrame, nombre_modelo: str, algoritmo: str, k: int,
+                          params: dict = None, metricas: dict = None, figuras: dict = None,
+                          tablas: dict = None, alias: str = ALIAS) -> int:
+    """Loguea y REGISTRA el modelo de segmentación campeón con alias y tags (algoritmo, k)."""
+    _, info = loguear_run_cluster(f"campeon_{algoritmo}_k{k}", "campeon", params, metricas, figuras, tablas,
+                                  modelo=modelo, sdf_ejemplo=sdf_ejemplo, registered_model_name=nombre_modelo)
+    version = info.registered_model_version
+    client = MlflowClient()
+    client.set_registered_model_alias(nombre_modelo, alias, version)
+    client.set_model_version_tag(nombre_modelo, version, "algoritmo", algoritmo)
+    client.set_model_version_tag(nombre_modelo, version, "k", str(k))
+    print(f"Registrado '{nombre_modelo}' v{version} ({algoritmo}, k={k}) con alias '@{alias}'")
+    return int(version)
+
+
+def cargar_segmentador(nombre_modelo: str, alias: str = ALIAS):
+    """Devuelve (PipelineModel, k, algoritmo). Requiere una SparkSession activa."""
+    mv = MlflowClient().get_model_version_by_alias(nombre_modelo, alias)
+    modelo = mlflow.spark.load_model(f"models:/{nombre_modelo}@{alias}")
+    k, alg = mv.tags.get("k"), mv.tags.get("algoritmo")
+    print(f"Cargado '{nombre_modelo}' v{mv.version} (@{alias}) | {alg}, k={k}")
+    return modelo, k, alg

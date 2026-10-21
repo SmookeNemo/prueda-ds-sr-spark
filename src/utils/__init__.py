@@ -14,4 +14,9 @@ from .metrics import (metricas_completas, metricas_confusion, metricas_curva, ev
 from .modeling import (split_train_val_test, construir_pipeline, modelos_base, entrenar_y_evaluar,
                        tabla_comparativa, elegir_campeon, espacios_busqueda, agregar_folds, tunear_modelo)
 from .mlflow_utils import (ALIAS, configurar_mlflow, loguear_run, registrar_campeon, cargar_campeon,
-                           predecir_con_campeon, listar_runs, registrar_desde_run)
+                           predecir_con_campeon, listar_runs, registrar_desde_run,
+                           loguear_run_cluster, registrar_segmentador, cargar_segmentador)
+from .clustering import (COL_CLUSTER, construir_preprocesamiento, elegir_n_pca, crear_modelo, silhouette, tamanos,
+                         evaluar_k, elegir_k, challenge_algoritmos, elegir_campeon_cluster, estabilidad_semillas,
+                         unir_pipeline, perfilar_clusters, perfil_relativo, rasgos_principales,
+                         graficar_codo_silhouette, graficar_clusters_2d, graficar_perfil)
